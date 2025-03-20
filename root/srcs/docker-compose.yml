@@ -1,0 +1,72 @@
+version: "3.8"
+
+services:
+  nginx:
+    build: 
+      context: requirements/nginx/.
+      args:
+        - CRED_PATH
+        - CRED_CERT
+        - CRED_KEY
+        - COUNTRY
+        - STATE
+        - LOCALITY
+        - ORGANIZATION
+        - ORG_UNIT
+        - COMMON_NAME
+    env_file:
+      - .env
+    container_name: nginx
+    restart: on-failure
+    depends_on:
+      - wordpress
+    networks:
+      - inception
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress:/var/www/html
+  wordpress:
+    build: requirements/wordpress/.
+    container_name: wordpress
+    restart: on-failure
+    depends_on:
+      - mariadb
+    networks:
+      - inception
+    expose:
+      - "9000"
+    volumes:
+      - wordpress:/var/www/html
+    env_file:
+      - .env
+  mariadb:
+    build: requirements/mariadb/.
+    container_name: mariadb
+    restart: on-failure
+    networks:
+      - inception
+    expose:
+      - "3306"
+    volumes:
+      - database:/var/lib/mysql
+    env_file:
+      - .env
+
+volumes:
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/vivaccar/data/wordpress
+  database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/vivaccar/data/mariadb
+
+networks:
+  inception:
+    driver: bridge
